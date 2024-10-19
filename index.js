@@ -1,6 +1,5 @@
 import beautify from 'beautify';
-import parse from 'style-to-object';
-import cssToObject from 'css-to-object';
+
 const selfClosingTags = ['input', 'img', 'br', 'hr', 'meta', 'link', 'col', 'area', 'base'];
 const tagsRequiringClosing = new Set(['div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'table', 'tr', 'td', 'th', 'form', 'button', 'textarea', 'select', 'option', 'a']);
 export function wrapIntoDiv(html) {
@@ -11,13 +10,6 @@ const eventAttributesCallback = (_match, eventName, handler) => {
     newEventName.shift();
     return `on${eventName[0].toUpperCase() + newEventName.join('')}={${handler}}`;
 };
-function convertInlineStyles(html) {
-    const style = [html.matchAll(/style\s *=\s * (['"])(.*?)\1/gm)];
-    style.map((_m, _g1, g2) => {
-        html = html.replaceAll(g2, parse(g2));
-    });
-    return html;
-}
 export function closeSelfClosingTags(html) {
     return html.replaceAll(new RegExp(`<(${selfClosingTags.join('|')})([^>]*)\s*/?>`, 'gi'), (_match, tagName, attributes) => `<${tagName}${attributes ? attributes : ''}/>`).replace(/\/\/>/g, '/>');
 }
@@ -36,20 +28,9 @@ export function indentAllLines(html) {
 const isTagClosed = (tag) => {
     return !selfClosingTags.includes(tag) && tagsRequiringClosing.has(tag);
 };
-const validateInput = (html) => {
-    if (typeof html !== 'string' || html.trim() === '' || !html) {
-        throw new TypeError('Input must be valid a string.');
-    }
-};
 const validateTag = (tag) => {
     if (!isTagClosed(tag)) {
         throw new Error(`Tag <${tag}> is not closed.`);
-    }
-};
-const validateTags = (html) => {
-    let match;
-    while ((match = /<([^\s>\/]+)/g.exec(html)) !== null) {
-        validateTag(match[1].toLowerCase());
     }
 };
 export function toCamelCase(string) {
@@ -60,10 +41,36 @@ export function toCamelCase(string) {
         : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join('');
 }
-export function convertStyleToObject(html) {
-    return html.replaceAll(/style = (".*?")/gi, (match) => {
-        return `style={${cssToObject(match[1])}}`;
-    });
+export function convertInlineStylesToReactStyles(html) {
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+
+  function processElement(element) {
+    if (element.nodeType === 1) { 
+      const style = element.getAttribute('style');
+      if (style) {
+        element.style.cssText = style;
+        const reactStyleObject = {};
+        for (let i = 0; i < element.style.length; i++) {
+          const propertyName = element.style[i];
+          const camelCaseProperty = propertyName.replace(/-([a-z])/g, g => g[1].toUpperCase());
+          reactStyleObject[camelCaseProperty] = element.style.getPropertyValue(propertyName);
+        }
+        element.setAttribute('style', JSON.stringify(reactStyleObject));
+      }
+    }
+
+    // Process child elements recursively
+    for (let child of element.children) {
+      processElement(child);
+    }
+  }
+
+  // Process the root element
+  processElement(tempDiv);
+
+  // Return the updated HTML
+  return tempDiv.innerHTML.replace(/style="(.*?)"/gm, 'style={$1}').replace(/&quot;/g, '"');
 }
 export function imageFix(html) {
     return html.replaceAll('</img>', '');
@@ -82,8 +89,7 @@ export default function convert(html) {
     html = convertClassToClassName(html);
     html = removeComments(html);
     html = imageFix(html);
-    html = convertInlineStyles(html);
-    html = convertStyleToObject(html);
+    html = convertInlineStylesToReactStyles(html);
     html = removeUnsuportedAttrs(html);
     return indentAllLines(html);
 }

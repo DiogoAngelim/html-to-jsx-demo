@@ -5,37 +5,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HTML to JSX Converter</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"
-    crossorigin="anonymous"></script>
+  <script async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js" crossorigin="anonymous"></script>
   <script type="importmap">
-      {
-        "imports": {
-          "beautify": "https://ga.jspm.io/npm:beautify@0.0.8/index.js",
-          "css-to-object": "https://ga.jspm.io/npm:css-to-object@1.1.0/index.js",
-          "style-to-object": "https://ga.jspm.io/npm:style-to-object@1.0.8/esm/index.mjs"
-        },
-        "scopes": {
-          "https://ga.jspm.io/": {
-            "css": "https://ga.jspm.io/npm:css@2.2.4/index.js",
-            "cssbeautify": "https://ga.jspm.io/npm:cssbeautify@0.3.1/cssbeautify.js",
-            "fs": "https://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/fs.js",
-            "html": "https://ga.jspm.io/npm:html@1.0.0/lib/html.js",
-            "inherits": "https://ga.jspm.io/npm:inherits@2.0.4/inherits_browser.js",
-            "inline-style-parser": "https://ga.jspm.io/npm:inline-style-parser@0.2.4/index.js",
-            "js-beautify": "https://ga.jspm.io/npm:js-beautify@1.15.1/js/index.js",
-            "path": "https://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/path.js",
-            "process": "https://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/process.js",
-            "resolve-url": "https://ga.jspm.io/npm:resolve-url@0.2.1/resolve-url.js",
-            "source-map": "https://ga.jspm.io/npm:source-map@0.6.1/source-map.js",
-            "source-map-resolve": "https://ga.jspm.io/npm:source-map-resolve@0.5.3/source-map-resolve.js",
-            "source-map-url": "https://ga.jspm.io/npm:source-map-url@0.4.1/source-map-url.js",
-            "stylis": "https://ga.jspm.io/npm:stylis@2.0.12/stylis.js",
-            "urix": "https://ga.jspm.io/npm:urix@0.1.0/index.js"
-          }
-        }
+  {
+    "imports": {
+      "beautify": "https://ga.jspm.io/npm:beautify@0.0.8/index.js",
+      "html-entities": "https://ga.jspm.io/npm:html-entities@2.5.2/lib/index.js"
+    },
+    "scopes": {
+      "https://ga.jspm.io/": {
+        "cssbeautify": "https://ga.jspm.io/npm:cssbeautify@0.3.1/cssbeautify.js",
+        "html": "https://ga.jspm.io/npm:html@1.0.0/lib/html.js",
+        "js-beautify": "https://ga.jspm.io/npm:js-beautify@1.15.1/js/index.js"
       }
-      </script>
+    }
+  }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script type="module">
     import convert from './index.js';
     document.getElementById('htmlInput').addEventListener('keyup', function () {

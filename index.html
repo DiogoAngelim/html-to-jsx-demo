@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML to JSX Converter</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"
+    crossorigin="anonymous"></script>
+  <script type="importmap">
+      {
+        "imports": {
+          "beautify": "https://ga.jspm.io/npm:beautify@0.0.8/index.js",
+          "css-to-object": "https://ga.jspm.io/npm:css-to-object@1.1.0/index.js",
+          "style-to-object": "https://ga.jspm.io/npm:style-to-object@1.0.8/esm/index.mjs"
+        },
+        "scopes": {
+          "https://ga.jspm.io/": {
+            "css": "https://ga.jspm.io/npm:css@2.2.4/index.js",
+            "cssbeautify": "https://ga.jspm.io/npm:cssbeautify@0.3.1/cssbeautify.js",
+            "fs": "https://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/fs.js",
+            "html": "https://ga.jspm.io/npm:html@1.0.0/lib/html.js",
+            "inherits": "https://ga.jspm.io/npm:inherits@2.0.4/inherits_browser.js",
+            "inline-style-parser": "https://ga.jspm.io/npm:inline-style-parser@0.2.4/index.js",
+            "js-beautify": "https://ga.jspm.io/npm:js-beautify@1.15.1/js/index.js",
+            "path": "https://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/path.js",
+            "process": "https://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/process.js",
+            "resolve-url": "https://ga.jspm.io/npm:resolve-url@0.2.1/resolve-url.js",
+            "source-map": "https://ga.jspm.io/npm:source-map@0.6.1/source-map.js",
+            "source-map-resolve": "https://ga.jspm.io/npm:source-map-resolve@0.5.3/source-map-resolve.js",
+            "source-map-url": "https://ga.jspm.io/npm:source-map-url@0.4.1/source-map-url.js",
+            "stylis": "https://ga.jspm.io/npm:stylis@2.0.12/stylis.js",
+            "urix": "https://ga.jspm.io/npm:urix@0.1.0/index.js"
+          }
+        }
+      }
+      </script>
+  <script type="module">
+    import convert from './index.js';
+    document.getElementById('htmlInput').addEventListener('keyup', function () {
+      const html = this.value;
+      const jsx = convert(html);
+
+      document.getElementById('jsxOutput').value = jsx;
+    });
+
+    function hideToast() {
+      const toast = document.getElementById('toast');
+      toast.classList.add('hidden');
+    }
+
+    document.getElementById('copyButton').addEventListener('click', function () {
+      const jsx = document.getElementById('jsxOutput').value;
+
+      navigator.clipboard.writeText(jsx).then(function () {
+        document.getElementById('toast').classList.remove('hidden');
+        setTimeout(function () {
+          hideToast();
+        }, 4000);
+      })
+    }, function (err) {
+      console.error('Async: Could not copy text: ', err);
+    });
+
+    document.getElementById('toast-close').addEventListener('click', function () {
+      hideToast();
+    });
+  </script>
+</head>
+
+<div id="toast" class="fixed bottom-5 right-5 bg-blue-500 text-white p-4 rounded shadow-lg hidden">
+  <span id="toast-message">Your JSX code has been copied!</span>
+  <button id="toast-close" class="ml-4 text-white font-bold">×</button>
+</div>
+
+<body class="bg-gray-100 p-8">
+
+  <div class="max-w-4xl mx-auto bg-white p-6 shadow-lg rounded-lg">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">HTML to JSX Converter</h1>
+
+    <div class="mb-4">
+      <label for="htmlInput" class="block text-gray-700 font-medium mb-2">HTML Input</label>
+      <textarea id="htmlInput" rows="8"
+        class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400"></textarea>
+    </div>
+
+    <div class="mb-4">
+      <label for="jsxOutput" class="block text-gray-700 font-medium mb-2">JSX Output</label>
+      <textarea id="jsxOutput" rows="8"
+        class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400" readonly></textarea>
+    </div>
+
+    <button id="copyButton" class="w-full bg-indigo-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-600">
+      Copy JSX
+    </button>
+  </div>
+
+</body>
+
+</html>

@@ -6,9 +6,10 @@ export function wrapIntoDiv(html) {
     return `<div>${html}</div>`;
 }
 const eventAttributesCallback = (_match, eventName, handler) => {
-    const newEventName = eventName.slice(2).split('');
-    newEventName.shift();
-    return `on${eventName[0].toUpperCase() + newEventName.join('')}={${handler}}`;
+    const eventPart = eventName.slice(2);
+    console.log(eventPart);
+    
+    return `on${eventPart.charAt(0).toUpperCase()}${eventPart.slice(1)}={${handler}}`;
 };
 export function closeSelfClosingTags(html) {
     return html.replaceAll(new RegExp(`<(${selfClosingTags.join('|')})([^>]*)\s*/?>`, 'gi'), (_match, tagName, attributes) => `<${tagName}${attributes ? attributes : ''}/>`).replace(/\/\/>/g, '/>');
@@ -84,12 +85,12 @@ export function removeUnsuportedAttrs(html) {
 export default function convert(html) {
     html = wrapIntoDiv(html);
     html = removeInvalidTags(html);
-    html = convertEventAttributesToCamelCase(html);
     html = convertClassToClassName(html);
     html = removeComments(html);
     html = imageFix(html);
     html = convertInlineStylesToReactStyles(html);
     html = removeUnsuportedAttrs(html);
     html = closeSelfClosingTags(html);
+    html = convertEventAttributesToCamelCase(html);
     return indentAllLines(html);
 }

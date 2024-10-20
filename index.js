@@ -85,12 +85,12 @@ export function removeUnsuportedAttrs(html) {
 export default function convert(html) {
     html = wrapIntoDiv(html);
     html = removeInvalidTags(html);
-    html = convertClassToClassName(html);
     html = removeComments(html);
     html = imageFix(html);
     html = convertInlineStylesToReactStyles(html);
     html = removeUnsuportedAttrs(html);
     html = closeSelfClosingTags(html);
+    html = convertClassToClassName(html);
     html = convertEventAttributesToCamelCase(html);
     return indentAllLines(html);
 }

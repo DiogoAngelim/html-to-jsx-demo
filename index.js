@@ -82,6 +82,14 @@ export function removeInvalidTags(html) {
 export function removeUnsuportedAttrs(html) {
     return html.replaceAll('xmlns:xlink="http://www.w3.org/1999/xlink"', '');
 }
+export function replaceAttributes(html) {
+    html = html.replace(/\b($for)\b/gi, 'htmlFor');
+    html = html.replace(/\b($autocomplete)\b/gi, 'autoComplete');
+    html = html.replace(/\b($tabindex)\b/ig, 'tabIndex');
+    html = html.replace(/\b($stroke-width)\b/ig, 'strokeWidth');
+    html = html.replace(/\b($stroke-line-join)\b/ig, 'strokeLinejoin');
+    return html.replace(/\b($strokeLineCap)\b/ig, 'strokeLinecap');	
+}
 export default function convert(html) {
     html = wrapIntoDiv(html);
     html = removeInvalidTags(html);
@@ -92,5 +100,6 @@ export default function convert(html) {
     html = closeSelfClosingTags(html);
     html = convertClassToClassName(html);
     html = convertEventAttributesToCamelCase(html);
+    html = replaceAttributes(html);
     return indentAllLines(html);
 }

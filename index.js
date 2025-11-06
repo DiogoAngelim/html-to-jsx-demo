@@ -1,18 +1,32 @@
 import beautify from 'beautify';
-
 const selfClosingTags = ['input', 'img', 'br', 'hr', 'meta', 'link', 'col', 'area', 'base'];
 const tagsRequiringClosing = new Set(['div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'table', 'tr', 'td', 'th', 'form', 'button', 'textarea', 'select', 'option', 'a']);
 export function wrapIntoDiv(html) {
     return `<div>${html}</div>`;
 }
+function cssToObject(cssString) {
+    const cleanCss = cssString.replace(/['"]/g, '').trim();
+    if (!cleanCss)
+        return '{}';
+    const styles = cleanCss.split(';')
+        .filter((style) => style.trim())
+        .map((style) => {
+        const [property, value] = style.split(':').map((s) => s.trim());
+        if (!property || !value)
+            return '';
+        const camelProperty = property.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+        return `${camelProperty}: "${value}"`;
+    })
+        .filter(Boolean);
+    return `{${styles.join(', ')}}`;
+}
 const eventAttributesCallback = (_match, eventName, handler) => {
-    const eventPart = eventName.slice(2);
-    console.log(eventPart);
-    
-    return `on${eventPart.charAt(0).toUpperCase()}${eventPart.slice(1)}={${handler}}`;
+    const newEventName = eventName.slice(2).split('')[0].toUpperCase();
+    return `on${newEventName}${eventName.slice(3)}={${handler}}`;
 };
 export function closeSelfClosingTags(html) {
-    return html.replaceAll(new RegExp(`<(${selfClosingTags.join('|')})([^>]*)\s*/?>`, 'gi'), (_match, tagName, attributes) => `<${tagName}${attributes ? attributes : ''}/>`).replace(/\/\/>/g, '/>');
+    const result = html.replaceAll(new RegExp(`<(${selfClosingTags.join("|")})(?=[\\s>/])([^>]*)\\s*/?>`, "gi"), (_match, tagName, attributes) => `<${tagName}${attributes ? attributes : ""}/>`);
+    return result.replace(/\/\/>/g, "/>");
 }
 export function convertEventAttributesToCamelCase(html) {
     return html.replaceAll(/(\bon\w+)=["']([^"']+)["']/g, eventAttributesCallback);
@@ -29,9 +43,21 @@ export function indentAllLines(html) {
 const isTagClosed = (tag) => {
     return !selfClosingTags.includes(tag) && tagsRequiringClosing.has(tag);
 };
+const validateInput = (html) => {
+    if (typeof html !== 'string' || html.trim() === '' || !html) {
+        throw new TypeError('Input must be valid a string.');
+    }
+};
 const validateTag = (tag) => {
     if (!isTagClosed(tag)) {
         throw new Error(`Tag <${tag}> is not closed.`);
+    }
+};
+const validateTags = (html) => {
+    let match;
+    const regex = /<([^\s>\/]+)/g;
+    while ((match = regex.exec(html)) !== null) {
+        validateTag(match[1].toLowerCase());
     }
 };
 export function toCamelCase(string) {
@@ -42,64 +68,80 @@ export function toCamelCase(string) {
         : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join('');
 }
-export function convertInlineStylesToReactStyles(html) {
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = html;
-
-  function processElement(element) {
-    if (element.nodeType === 1) { 
-      const style = element.getAttribute('style');
-      if (style) {
-        element.style.cssText = style;
-        const reactStyleObject = {};
-        for (let i = 0; i < element.style.length; i++) {
-          const propertyName = element.style[i];
-          const camelCaseProperty = propertyName.replace(/-([a-z])/g, g => g[1].toUpperCase());
-          reactStyleObject[camelCaseProperty] = element.style.getPropertyValue(propertyName);
-        }
-        element.setAttribute('style', JSON.stringify(reactStyleObject));
-      }
-    }
-
-    // Process child elements recursively
-    for (let child of element.children) {
-      processElement(child);
-    }
-  }
-
-  // Process the root element
-  processElement(tempDiv);
-
-  // Return the updated HTML
-  return tempDiv.innerHTML.replace(/style="(.*?)"/gm, 'style={$1}').replace(/&quot;/g, '"');
+export function convertStyleToObject(html) {
+    return html.replaceAll(/style\s*=\s*(".*?")/gi, (match, styleValue) => {
+        return `style={${cssToObject(styleValue)}}`;
+    });
 }
 export function imageFix(html) {
     return html.replaceAll('</img>', '');
 }
 export function removeInvalidTags(html) {
-    return html.replace(/<!DOCTYPE html>/gi, '');
+    return html.replace(/<!DOCTYPE html>|<!DOCTYPE>/gi, '');
 }
 export function removeUnsuportedAttrs(html) {
     return html.replaceAll('xmlns:xlink="http://www.w3.org/1999/xlink"', '');
 }
 export function replaceAttributes(html) {
-    html = html.replace(/\b(for)\b/gi, 'htmlFor');
+    html = html.replace(/for=/gi, 'htmlFor=');
     html = html.replace(/\b(autocomplete)\b/gi, 'autoComplete');
     html = html.replace(/\b(tabindex)\b/ig, 'tabIndex');
     html = html.replace(/\b(stroke-width)\b/ig, 'strokeWidth');
     html = html.replace(/\b(stroke-linejoin)\b/ig, 'strokeLinejoin');
-    return html.replace(/\b(stroke-linecap)\b/ig, 'strokeLinecap');	
+    return html.replace(/\b(stroke-linecap)\b/ig, 'strokeLinecap');
+}
+
+export function validateHtml(html) {
+    if (typeof html !== 'string') {
+        throw new TypeError('Input must be a string.');
+    }
+    
+    if (html.trim() === '') {
+        return 'HTML is valid.';
+    }
+    
+    const tagStack = [];
+    const tagRegex = /<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g;
+    let match;
+    
+    while ((match = tagRegex.exec(html)) !== null) {
+        const fullTag = match[0];
+        const tagName = match[1].toLowerCase();
+        
+        if (fullTag.endsWith('/>') || selfClosingTags.includes(tagName)) {
+            continue;
+        }
+        
+        if (fullTag.startsWith('</')) {
+            if (tagStack.length === 0) {
+                throw new Error(`Unexpected closing tag: ${fullTag}`);
+            }
+            const lastOpenTag = tagStack.pop();
+            if (lastOpenTag !== tagName) {
+                throw new Error(`Mismatched tags: expected </${lastOpenTag}> but found </${tagName}>`);
+            }
+        } else {
+            tagStack.push(tagName);
+        }
+    }
+    
+    // Check if there are unclosed tags
+    if (tagStack.length > 0) {
+        throw new Error(`Unclosed tags: ${tagStack.map(tag => `<${tag}>`).join(', ')}`);
+    }
+    
+    return 'HTML is valid.';
 }
 export default function convert(html) {
-    html = wrapIntoDiv(html);
     html = removeInvalidTags(html);
+    html = wrapIntoDiv(html);
+    html = closeSelfClosingTags(html);
+    html = convertEventAttributesToCamelCase(html);
+    html = convertClassToClassName(html);
     html = removeComments(html);
     html = imageFix(html);
-    html = convertInlineStylesToReactStyles(html);
+    html = convertStyleToObject(html);
     html = removeUnsuportedAttrs(html);
-    html = closeSelfClosingTags(html);
-    html = convertClassToClassName(html);
-    html = convertEventAttributesToCamelCase(html);
     html = replaceAttributes(html);
     return indentAllLines(html);
 }
